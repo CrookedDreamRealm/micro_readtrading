@@ -10,7 +10,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity(name="trading")
-public class TradingReadDTO {
+public class TradingDTO {
     @Id
     @GeneratedValue(strategy= GenerationType.AUTO)
     private Integer id;

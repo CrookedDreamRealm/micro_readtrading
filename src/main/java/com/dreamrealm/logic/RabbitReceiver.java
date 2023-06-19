@@ -1,8 +1,13 @@
 package com.dreamrealm.logic;
 
-import com.dreamrealm.model.TradingReadModel;
+import com.dreamrealm.model.OfferReceiver;
+import com.dreamrealm.model.Trading;
 import com.dreamrealm.repository.TradingWriteRepo;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.modelmapper.ModelMapper;
 import org.springframework.amqp.rabbit.annotation.RabbitHandler;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -20,25 +25,46 @@ public class RabbitReceiver {
         this.rabbitTemplate = rabbitTemplate;
     }
     @Autowired
-    TradingReadLogic tradingLogic;
+    TradingLogic tradingLogic;
 
-    @RabbitListener(queues = {"q.readOffer"})
-    @RabbitHandler
-    public void onOfferRegistration(TradingReadModel event)  {
+    /*@RabbitListener(queues = {"q.readOffer"})
+    public void onOfferRegistration(Offer event)  {
         log.info("Offer Registration Event Received: {}", event);
         //executeRegistration(event);
         //rabbitTemplate.convertAndSend("x.post-registration","", event);
         System.out.println(event);
-        TradingReadModel trade = new TradingReadModel();
+        Offer trade = new Offer();
         trade.setOffer(event.getOffer());
         trade.setMessageId(event.getMessageId());
         trade.setStatus(event.getStatus());
-        tradingLogic.createTrade(trade);
+        //tradingLogic.createTrade(trade);
         log.info("Offer: {}", trade);
+    }*/
+
+    @RabbitHandler
+    @RabbitListener(queues = {"q.readOffer"})
+    public void onReadOfferRegistration(String offerReceive) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        log.info("Offer Registration Event Received: {}", offerReceive);
+        String offerReceiveErr = offerReceive.replaceAll("^\"|\"$", "");
+        offerReceiveErr = offerReceiveErr.replaceAll("\\\\", "");
+        try  {
+            JsonNode node = objectMapper.readTree(offerReceiveErr);
+            log.info("node1: {}", node);
+            Trading trade = new Trading();
+            trade.setUserId(node.get("userId").asText());
+            trade.setMessageId(node.get("messageId").asText());
+            trade.setOffer(node.get("offer").asText());
+            trade.setStatus(node.get("status").asText());
+            tradingLogic.createTrade(trade);
+        }catch(Exception e){
+            e.printStackTrace();
+        }
     }
 
-    @RabbitListener(queues = {"q.deleteReadInfoTrade"})
+
     @RabbitHandler
+    @RabbitListener(queues = {"q.deleteReadInfoTrade"})
     public void onDeleteAccRegistration(String id)  {
         log.info("Offer Registration Event Received: {}", id);
         //executeRegistration(event);
@@ -53,7 +79,7 @@ public class RabbitReceiver {
         log.info("Executing fallback for failed registration {}", failedRegistration);
     }*/
 
-    private void executeRegistration(TradingReadModel event) {
+    private void executeRegistration(Trading event) {
         log.info("Executing offer Registration Event: {}", event);
 
         throw new RuntimeException("Registration Failed");

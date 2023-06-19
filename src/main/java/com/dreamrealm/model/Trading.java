@@ -5,7 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class TradingReadModel {
+public class Trading {
     private Integer id;
     private String userId;
     private String messageId;

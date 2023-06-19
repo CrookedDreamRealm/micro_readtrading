@@ -1,24 +1,26 @@
 package com.dreamrealm.logic;
 
-import com.dreamrealm.dto.TradingReadDTO;
-import com.dreamrealm.model.TradingReadModel;
+import com.dreamrealm.dto.TradingDTO;
+import com.dreamrealm.model.Trading;
 import com.dreamrealm.repository.TradingWriteRepo;
 import org.modelmapper.ModelMapper;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class TradingReadLogic {
+@Service
+public class TradingLogic {
     @Autowired
     RabbitTemplate rabbitTemplate;
     @Autowired
     TradingWriteRepo tradingRep;
-    public boolean createTrade(TradingReadModel trading){
+    public boolean createTrade(Trading trading){
         try{
             ModelMapper modelMapper = new ModelMapper();
-            TradingReadDTO tradingDTO = modelMapper.map(trading, TradingReadDTO.class);
+            TradingDTO tradingDTO = modelMapper.map(trading, TradingDTO.class);
             tradingRep.save(tradingDTO);
             return true;
         }
@@ -27,19 +29,19 @@ public class TradingReadLogic {
         }
     }
 
-    public List<TradingReadModel> getAllTrades(){
-        List<TradingReadDTO> tradingDTO = (List<TradingReadDTO>) tradingRep.findAll();
+    public List<Trading> getAllTrades(){
+        List<TradingDTO> tradingDTO = (List<TradingDTO>) tradingRep.findAll();
         ModelMapper modelMapper = new ModelMapper();
-        List<TradingReadModel> trades = tradingDTO.stream().map(trade -> modelMapper.map(trade, TradingReadModel.class)).collect(Collectors.toList());
+        List<Trading> trades = tradingDTO.stream().map(trade -> modelMapper.map(trade, Trading.class)).collect(Collectors.toList());
         return trades;
     }
 
-    public boolean editTrade(TradingReadModel trading){
+    public boolean editTrade(Trading trading){
         try{
             ModelMapper modelMapper = new ModelMapper();
-            TradingReadDTO tradingDTO = modelMapper.map(trading, TradingReadDTO.class);
-            TradingReadDTO oldItem = tradingRep.findByItemId(tradingDTO.getId());
-            TradingReadDTO newItem = tradingDTO;
+            TradingDTO tradingDTO = modelMapper.map(trading, TradingDTO.class);
+            TradingDTO oldItem = tradingRep.findByItemId(tradingDTO.getId());
+            TradingDTO newItem = tradingDTO;
             newItem.setId(oldItem.getId());
             tradingRep.save(newItem);
             return true;
@@ -51,8 +53,8 @@ public class TradingReadLogic {
 
     public boolean removeUserFromTrade(String id){
         try{
-            List<TradingReadDTO> oldItems = tradingRep.findByUserId(id);
-            for(TradingReadDTO oldItem : oldItems)
+            List<TradingDTO> oldItems = tradingRep.findByUserId(id);
+            for(TradingDTO oldItem : oldItems)
             {
                 oldItem.setUserId(null);
                 oldItem.setStatus("Cancelled");
